@@ -1,4 +1,4 @@
-😎 Hello there,
+<img src="https://caglarorhan.github.io/supportme/img/profil_400x400.jpg" width="100px">
 
 Hello there, I'm a software developer working on open-source projects. If you find my work helpful, consider supporting me. You can make a donation through PayPal or Buy Me A Coffee. Your support is greatly appreciated!
 
