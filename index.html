@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Caglar Orhan - Full-Stack Developer & AI Architect | Cyberpunk Portfolio" />
+    <meta name="keywords" content="developer, AI, full-stack, portfolio, react, three.js" />
+    <meta name="author" content="Caglar Orhan" />
+    <meta name="theme-color" content="#0a0a0f" />
+    
+    <!-- Futuristic Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Exo+2:wght@200;300;400;500;600;700&family=Rajdhani:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <title>CAGLAR ORHAN // SYSTEM INTERFACE</title>
+    
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      
+      html {
+        scroll-behavior: smooth;
+      }
+      
+      body {
+        font-family: 'Exo 2', sans-serif;
+        background: #0a0a0f;
+        color: #e0e0e0;
+        overflow-x: hidden;
+        cursor: none;
+      }
+      
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      
+      ::-webkit-scrollbar-track {
+        background: #0a0a0f;
+      }
+      
+      ::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, #00f5ff, #ff00ff);
+        border-radius: 3px;
+      }
+      
+      /* Loading Screen */
+      #loading-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #0a0a0f;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        flex-direction: column;
+        gap: 20px;
+      }
+      
+      .loading-text {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.5rem;
+        color: #00f5ff;
+        text-transform: uppercase;
+        letter-spacing: 8px;
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+      
+      .loading-bar {
+        width: 200px;
+        height: 2px;
+        background: rgba(0, 245, 255, 0.2);
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .loading-bar::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, #00f5ff, #ff00ff, transparent);
+        animation: loading 1.5s ease-in-out infinite;
+      }
+      
+      @keyframes loading {
+        0% { left: -100%; }
+        100% { left: 100%; }
+      }
+      
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+      }
+    </style>
+    <script type="module" crossorigin src="/assets/index-DZUB4WXo.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/react-DPOtbovq.js">
+    <link rel="modulepreload" crossorigin href="/assets/gsap-CSqFbIEy.js">
+    <link rel="modulepreload" crossorigin href="/assets/three-X4FSWeSx.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-DWFKMXCD.css">
+  </head>
+  <body>
+    <div id="loading-screen">
+      <div class="loading-text">Initiating</div>
+      <div class="loading-bar"></div>
+    </div>
+    <div id="root"></div>
+  </body>
+</html>
