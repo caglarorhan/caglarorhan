@@ -1,0 +1,142 @@
+[
+  {
+    "id": 1,
+    "name": "About Me",
+    "type": "html",
+    "src": "<h2>About Me</h2><p>Full-stack developer passionate about creating immersive web experiences.</p>",
+    "distance": 4
+  },
+  {
+    "id": 2,
+    "name": "GitHub",
+    "type": "link",
+    "src": "https://github.com/caglarorhan",
+    "distance": 5
+  },
+  {
+    "id": 3,
+    "name": "LinkedIn",
+    "type": "link",
+    "src": "https://linkedin.com/in/caglarorhan",
+    "distance": 4.5
+  },
+  {
+    "id": 4,
+    "name": "Portfolio",
+    "type": "photo",
+    "src": "https://via.placeholder.com/400x300/0a0a1a/00f5ff?text=Portfolio",
+    "distance": 5.5
+  },
+  {
+    "id": 5,
+    "name": "Contact",
+    "type": "html",
+    "src": "<h2>Contact</h2><p>Email: hello@example.com</p><p>Let's build something amazing together.</p>",
+    "distance": 6
+  },
+  {
+    "id": 100,
+    "name": null,
+    "type": null,
+    "src": null,
+    "distance": 3.5
+  },
+  {
+    "id": 101,
+    "name": null,
+    "type": null,
+    "src": null,
+    "distance": 4.2
+  },
+  {
+    "id": 102,
+    "name": null,
+    "type": null,
+    "src": null,
+    "distance": 3.8
+  },
+  {
+    "id": 103,
+    "name": null,
+    "type": null,
+    "src": null,
+    "distance": 5.0
+  },
+  {
+    "id": 104,
+    "name": null,
+    "type": null,
+    "src": null,
+    "distance": 4.7
+  },
+  {
+    "id": 105,
+    "name": null,
+    "type": null,
+    "src": null,
+    "distance": 3.2
+  },
+  {
+    "id": 106,
+    "name": null,
+    "type": null,
+    "src": null,
+    "distance": 5.8
+  },
+  {
+    "id": 107,
+    "name": null,
+    "type": null,
+    "src": null,
+    "distance": 4.0
+  },
+  {
+    "id": 108,
+    "name": null,
+    "type": null,
+    "src": null,
+    "distance": 6.2
+  },
+  {
+    "id": 109,
+    "name": null,
+    "type": null,
+    "src": null,
+    "distance": 3.6
+  },
+  {
+    "id": 110,
+    "name": null,
+    "type": null,
+    "src": null,
+    "distance": 5.3
+  },
+  {
+    "id": 111,
+    "name": null,
+    "type": null,
+    "src": null,
+    "distance": 4.4
+  },
+  {
+    "id": 112,
+    "name": null,
+    "type": null,
+    "src": null,
+    "distance": 3.9
+  },
+  {
+    "id": 113,
+    "name": null,
+    "type": null,
+    "src": null,
+    "distance": 5.6
+  },
+  {
+    "id": 114,
+    "name": null,
+    "type": null,
+    "src": null,
+    "distance": 4.1
+  }
+]

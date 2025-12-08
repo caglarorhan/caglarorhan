@@ -1,0 +1,187 @@
+.floating-links {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.floating-link {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: none;
+  cursor: none;
+  pointer-events: auto;
+  transform: translate(-50%, -50%);
+  transition: transform 0.3s ease;
+  animation: float-particle 6s ease-in-out infinite;
+}
+
+.floating-link:hover {
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+@keyframes float-particle {
+  0%, 100% {
+    transform: translate(-50%, -50%) translateY(0);
+  }
+  50% {
+    transform: translate(-50%, -50%) translateY(-15px);
+  }
+}
+
+/* Particle Structure */
+.link-particle {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.particle-core {
+  width: 40px;
+  height: 40px;
+  background: rgba(10, 10, 20, 0.8);
+  border: 2px solid var(--link-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+  clip-path: polygon(
+    10% 0%, 90% 0%, 100% 10%, 100% 90%, 
+    90% 100%, 10% 100%, 0% 90%, 0% 10%
+  );
+  transition: all 0.3s ease;
+}
+
+.floating-link:hover .particle-core {
+  background: rgba(0, 245, 255, 0.2);
+  box-shadow: 
+    0 0 20px var(--link-color),
+    inset 0 0 20px rgba(0, 245, 255, 0.1);
+}
+
+.particle-icon {
+  font-size: 1.2rem;
+  color: var(--link-color);
+  transition: all 0.3s ease;
+}
+
+.floating-link:hover .particle-icon {
+  text-shadow: 0 0 20px var(--link-color);
+  transform: scale(1.2);
+}
+
+/* Rotating Rings */
+.particle-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 55px;
+  height: 55px;
+  border: 1px solid var(--link-color);
+  opacity: 0.5;
+  transform: translate(-50%, -50%) rotate(45deg);
+  animation: rotate-ring 8s linear infinite;
+  clip-path: polygon(
+    10% 0%, 90% 0%, 100% 10%, 100% 90%, 
+    90% 100%, 10% 100%, 0% 90%, 0% 10%
+  );
+}
+
+.particle-ring.ring-2 {
+  width: 70px;
+  height: 70px;
+  opacity: 0.3;
+  animation: rotate-ring 12s linear infinite reverse;
+}
+
+@keyframes rotate-ring {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+/* Glow Effect */
+.particle-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 80px;
+  height: 80px;
+  background: radial-gradient(
+    circle,
+    var(--link-color) 0%,
+    transparent 70%
+  );
+  opacity: 0.15;
+  transform: translate(-50%, -50%);
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.floating-link:hover .particle-glow {
+  opacity: 0.3;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.15;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 0.25;
+  }
+}
+
+/* Label */
+.link-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--link-color);
+  letter-spacing: 3px;
+  opacity: 0;
+  transform: translateY(-5px);
+  transition: all 0.3s ease;
+  text-shadow: 0 0 10px var(--link-color);
+}
+
+.floating-link:hover .link-label {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .link-particle {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .particle-core {
+    width: 35px;
+    height: 35px;
+  }
+  
+  .particle-ring {
+    width: 45px;
+    height: 45px;
+  }
+  
+  .particle-ring.ring-2 {
+    width: 55px;
+    height: 55px;
+  }
+}
