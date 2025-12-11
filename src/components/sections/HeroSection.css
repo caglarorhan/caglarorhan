@@ -425,6 +425,67 @@
   flex: 1;
 }
 
+/* Search Input */
+.legend-search {
+  position: relative;
+  margin-bottom: 15px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 8px 30px 8px 12px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(0, 245, 255, 0.3);
+  border-radius: 4px;
+  color: #fff;
+  font-family: 'Exo 2', sans-serif;
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  box-sizing: border-box;
+}
+
+.search-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.search-input:focus {
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 8px rgba(0, 245, 255, 0.3);
+}
+
+.search-clear {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+
+.search-clear:hover {
+  color: var(--neon-cyan);
+}
+
+/* Highlighted legend item */
+.legend-item.highlighted {
+  background: rgba(0, 245, 255, 0.1);
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin-left: -8px;
+  margin-right: -8px;
+}
+
+.legend-item.highlighted .legend-name {
+  text-shadow: 0 0 8px currentColor;
+}
+
 /* Modal Overlay */
 .modal-overlay {
   position: fixed;
@@ -527,10 +588,124 @@
   color: rgba(255, 255, 255, 0.8);
 }
 
+.modal-body h3 {
+  font-family: 'Orbitron', monospace;
+  font-size: 14px;
+  color: #ff00ff;
+  margin: 20px 0 10px 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.modal-body ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 15px 0;
+}
+
+.modal-body li {
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-body li:last-child {
+  border-bottom: none;
+}
+
+.modal-body a {
+  color: #00f5ff;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  display: inline-block;
+}
+
+.modal-body a:hover {
+  color: #ff00ff;
+  text-shadow: 0 0 10px #ff00ff;
+  transform: translateX(5px);
+}
+
+.modal-body a::before {
+  content: '→ ';
+  opacity: 0.5;
+}
+
 .modal-image {
   width: 100%;
   border-radius: 8px;
   border: 1px solid rgba(0, 245, 255, 0.3);
+}
+
+/* Contact Form Styles */
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.form-group label {
+  font-family: 'Orbitron', monospace;
+  font-size: 11px;
+  color: #00f5ff;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.form-group input,
+.form-group textarea {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(0, 245, 255, 0.3);
+  border-radius: 6px;
+  padding: 12px 15px;
+  color: #fff;
+  font-family: 'Exo 2', sans-serif;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  border-color: #00f5ff;
+  box-shadow: 0 0 15px rgba(0, 245, 255, 0.3);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.submit-btn {
+  background: transparent;
+  border: 2px solid #00ff88;
+  color: #00ff88;
+  padding: 12px 25px;
+  font-family: 'Orbitron', monospace;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+  border-radius: 6px;
+}
+
+.submit-btn:hover {
+  background: #00ff88;
+  color: #0a0a1a;
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
 }
 
 /* Responsive for legend */
@@ -555,4 +730,216 @@
     width: 12px;
     height: 12px;
   }
+}
+
+/* ========================
+   TURRET ORB STYLES
+   ======================== */
+
+.turret-orb {
+  position: fixed;
+  bottom: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px;
+  height: 50px;
+  z-index: 100;
+  cursor: pointer;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), 
+              width 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), 
+              height 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.turret-orb.turret-active {
+  width: 80px;
+  height: 80px;
+  bottom: -30px;
+}
+
+.turret-base {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 30% 30%, #4a4a6a 0%, #1a1a2e 50%, #0a0a1a 100%);
+  border-radius: 50%;
+  border: 2px solid #00f5ff;
+  box-shadow: 
+    0 0 15px rgba(0, 245, 255, 0.5),
+    inset 0 0 20px rgba(0, 245, 255, 0.1);
+  overflow: visible;
+}
+
+.turret-orb.turret-active .turret-base {
+  border-color: #ff00ff;
+  box-shadow: 
+    0 0 20px rgba(255, 0, 255, 0.6),
+    0 0 40px rgba(255, 0, 255, 0.3),
+    inset 0 0 20px rgba(255, 0, 255, 0.1);
+}
+
+.turret-barrel {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 35px;
+  margin-left: -4px;
+  margin-top: -35px;
+  transform-origin: bottom center;
+  background: linear-gradient(to top, #2a2a4a 0%, #1a1a3a 50%, #0a0a2a 100%);
+  border: 1px solid #00f5ff;
+  border-radius: 3px 3px 0 0;
+  opacity: 0;
+  transition: opacity 0.3s ease, height 0.3s ease;
+}
+
+.turret-orb.turret-active .turret-barrel {
+  opacity: 1;
+  height: 45px;
+  margin-top: -45px;
+}
+
+.barrel-tip {
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 12px;
+  height: 8px;
+  background: linear-gradient(to top, #3a3a5a 0%, #00f5ff 100%);
+  border-radius: 3px 3px 0 0;
+  box-shadow: 0 0 10px rgba(0, 245, 255, 0.8);
+}
+
+.turret-orb.turret-firing .barrel-tip {
+  background: linear-gradient(to top, #ff4444 0%, #ff00ff 100%);
+  box-shadow: 0 0 15px rgba(255, 0, 255, 1);
+  animation: barrel-flash 0.1s ease;
+}
+
+@keyframes barrel-flash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.turret-glow {
+  position: absolute;
+  width: 150%;
+  height: 150%;
+  left: -25%;
+  top: -25%;
+  background: radial-gradient(circle, rgba(0, 245, 255, 0.2) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.turret-orb.turret-active .turret-glow {
+  opacity: 1;
+  animation: turret-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes turret-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.2); opacity: 0.8; }
+}
+
+/* Bullet styles */
+.turret-bullet {
+  position: fixed;
+  width: 16px;
+  height: 16px;
+  background: radial-gradient(circle, #fff 0%, #ff00ff 40%, #00f5ff 100%);
+  border-radius: 50%;
+  box-shadow: 
+    0 0 15px rgba(255, 0, 255, 1),
+    0 0 30px rgba(0, 245, 255, 0.8),
+    0 0 45px rgba(255, 0, 255, 0.5);
+  pointer-events: none;
+  /* transform is set via inline style for scale effect */
+}
+
+.turret-bullet::after {
+  content: '';
+  position: absolute;
+  width: 30px;
+  height: 8px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(90deg, transparent, rgba(0, 245, 255, 0.6), transparent);
+  border-radius: 50%;
+}
+
+/* Turret hover hint */
+.turret-orb::before {
+  content: '🎯';
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 14px;
+  opacity: 0;
+  transition: opacity 0.3s ease, top 0.3s ease;
+  pointer-events: none;
+}
+
+.turret-orb:hover::before {
+  opacity: 1;
+  top: -35px;
+}
+
+/* Turret locked state */
+.turret-orb.turret-locked {
+  bottom: -30px;
+}
+
+.turret-orb.turret-locked .turret-base {
+  border-color: #00ff88;
+  box-shadow: 
+    0 0 20px rgba(0, 255, 136, 0.6),
+    0 0 40px rgba(0, 255, 136, 0.3),
+    inset 0 0 20px rgba(0, 255, 136, 0.1);
+}
+
+.turret-lock-indicator {
+  position: absolute;
+  bottom: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  animation: lock-pulse 1s ease-in-out infinite;
+}
+
+@keyframes lock-pulse {
+  0%, 100% { opacity: 0.7; transform: translateX(-50%) scale(1); }
+  50% { opacity: 1; transform: translateX(-50%) scale(1.2); }
+}
+
+/* Turret sight cursor - applied to body when turret is active */
+.turret-cursor-active {
+  cursor: crosshair !important;
+}
+
+.turret-cursor-active * {
+  cursor: crosshair !important;
+}
+
+/* Custom SVG crosshair cursor */
+.turret-sight-cursor {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='10' fill='none' stroke='%2300f5ff' stroke-width='1.5' opacity='0.8'/%3E%3Ccircle cx='16' cy='16' r='3' fill='none' stroke='%23ff00ff' stroke-width='1.5'/%3E%3Cline x1='16' y1='2' x2='16' y2='8' stroke='%2300f5ff' stroke-width='1.5'/%3E%3Cline x1='16' y1='24' x2='16' y2='30' stroke='%2300f5ff' stroke-width='1.5'/%3E%3Cline x1='2' y1='16' x2='8' y2='16' stroke='%2300f5ff' stroke-width='1.5'/%3E%3Cline x1='24' y1='16' x2='30' y2='16' stroke='%2300f5ff' stroke-width='1.5'/%3E%3C/svg%3E") 16 16, crosshair !important;
+}
+
+.turret-sight-cursor * {
+  cursor: inherit !important;
+}
+
+/* Hide custom cursor elements when turret sight is active */
+.turret-sight-cursor .custom-cursor,
+.turret-sight-cursor .cursor-dot,
+.turret-sight-cursor .cursor-ring {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
 }

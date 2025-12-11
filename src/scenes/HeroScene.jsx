@@ -1,5 +1,5 @@
-import { useRef, useMemo, useState, useEffect, memo } from 'react'
-import { useFrame } from '@react-three/fiber'
+import { useRef, useMemo, useState, useEffect, memo, useCallback } from 'react'
+import { useFrame, useThree } from '@react-three/fiber'
 import { Sphere, Float, Html, Billboard } from '@react-three/drei'
 import * as THREE from 'three'
 
@@ -18,21 +18,29 @@ const BlackHole = () => {
   )
 }
 
-// Color map for different interactive cube types
-const CUBE_COLORS = {
-  'About Me': '#ffffff',      // Bright White
-  'Portfolio': '#ff00ff',     // Magenta
-  'Contact': '#00ff88',       // Green
-  'GitHub': '#f0db4f',        // Yellow
-  'LinkedIn': '#0077b5',      // LinkedIn Blue
-  'default': '#00f5ff'        // Default cyan
-}
+// Default color for cubes without a color field
+const DEFAULT_CUBE_COLOR = '#00f5ff'
 
 // Individual orbiting particle from JSON
-const OrbitingParticle = memo(({ data, index, onModalOpen }) => {
+const OrbitingParticle = memo(({ data, index, onModalOpen, isHighlighted = false, onExplode, shouldExplode = false, onPositionUpdate, onMeshRef, turretActive = false }) => {
   const meshRef = useRef()
   const edgesRef = useRef()
+  
+  // Register mesh ref with parent for raycasting
+  useEffect(() => {
+    if (meshRef.current && onMeshRef) {
+      onMeshRef(data.id, meshRef.current, data)
+      return () => onMeshRef(data.id, null, null) // Cleanup
+    }
+  }, [data.id, onMeshRef, data])
   const [hovered, setHovered] = useState(false)
+  const [isExploding, setIsExploding] = useState(false)
+  const [isVibrating, setIsVibrating] = useState(false)
+  const [isCoolingDown, setIsCoolingDown] = useState(false)
+  const [isDestroyed, setIsDestroyed] = useState(false)
+  const vibrationStartRef = useRef(0)
+  const cooldownStartRef = useRef(0)
+  const vibrationIntensityRef = useRef(0) // Track current intensity for smooth cooldown
   const pausedTimeRef = useRef(0)
   const lastTimeRef = useRef(0)
   
@@ -44,17 +52,22 @@ const OrbitingParticle = memo(({ data, index, onModalOpen }) => {
   
   const isInteractive = data.type !== null
   
-  // Get color based on name
-  const particleColor = isInteractive 
-    ? (CUBE_COLORS[data.name] || CUBE_COLORS.default) 
-    : '#ffffff'
+  // Get color from JSON data, fallback to default
+  const particleColor = data.color || DEFAULT_CUBE_COLOR
+  
+  // Store base orbit position for vibration offset
+  const basePositionRef = useRef([0, 0, 0])
+  const frozenPositionRef = useRef(null) // Frozen position when vibrating
   
   useFrame((state) => {
     const realTime = state.clock.getElapsedTime()
     
-    // Pause orbit when hovered
+    // If destroyed, don't update
+    if (isDestroyed) return
+    
+    // Pause orbit when hovered OR vibrating
     let effectiveTime
-    if (hovered) {
+    if ((hovered && !isVibrating) || isVibrating || isCoolingDown) {
       effectiveTime = pausedTimeRef.current
     } else {
       // Calculate time offset to continue smoothly after hover
@@ -69,17 +82,148 @@ const OrbitingParticle = memo(({ data, index, onModalOpen }) => {
     
     const angle = initialAngle + effectiveTime * orbitSpeed
     
-    // Calculate position
-    const x = Math.cos(angle) * data.distance
-    const z = Math.sin(angle) * data.distance
-    const y = verticalOffset + Math.sin(effectiveTime * 0.5 + index) * 0.3 + z * orbitTilt
+    // Calculate base orbital position
+    let baseX = Math.cos(angle) * data.distance
+    let baseZ = Math.sin(angle) * data.distance
+    let baseY = verticalOffset + Math.sin(effectiveTime * 0.5 + index) * 0.3 + baseZ * orbitTilt
+    
+    // When vibrating, use frozen position
+    if (isVibrating || isCoolingDown) {
+      if (frozenPositionRef.current) {
+        [baseX, baseY, baseZ] = frozenPositionRef.current
+      }
+    } else {
+      // Clear frozen position when not vibrating
+      frozenPositionRef.current = null
+    }
+    
+    // Store base position for explosion
+    basePositionRef.current = [baseX, baseY, baseZ]
+    
+    // Report position to parent for collision detection (include particle data)
+    if (onPositionUpdate && !isDestroyed) {
+      onPositionUpdate(data.id, [baseX, baseY, baseZ], data)
+    }
+    
+    // External explosion trigger (from bullet hit)
+    if (shouldExplode && !isExploding && !isDestroyed) {
+      setIsExploding(true)
+      if (onExplode) {
+        onExplode({
+          position: [baseX, baseY, baseZ],
+          color: particleColor,
+          id: data.id
+        })
+      }
+      setTimeout(() => {
+        setIsDestroyed(true)
+        setTimeout(() => {
+          setIsDestroyed(false)
+          setIsExploding(false)
+        }, 3000)
+      }, 100)
+    }
+    
+    // Final position (with vibration offset if vibrating)
+    let x = baseX
+    let y = baseY
+    let z = baseZ
+    
+    // Whole cube vibration effect - starts slow, gets intense
+    if (isVibrating && !isInteractive) {
+      // Capture start time on first frame of vibration
+      if (vibrationStartRef.current < 0) {
+        vibrationStartRef.current = realTime
+      }
+      
+      const vibrationTime = realTime - vibrationStartRef.current
+      const maxVibrationTime = 3.5 // 3.5 seconds to reach max and explode
+      
+      // Frequency starts at 5Hz and gradually increases to 80Hz over 3.5 seconds
+      const frequencyProgress = Math.min(vibrationTime / maxVibrationTime, 1)
+      const frequency = 5 + frequencyProgress * frequencyProgress * 75
+      
+      // Amplitude starts very small and grows slowly
+      const amplitudeProgress = Math.min(vibrationTime / maxVibrationTime, 1)
+      const amplitude = 0.005 + amplitudeProgress * 0.025 // Much smaller amplitude
+      
+      // Store current intensity for smooth cooldown
+      vibrationIntensityRef.current = amplitudeProgress
+      
+      // The whole cube shakes in place - small vibration centered on base position
+      const shakeX = Math.sin(realTime * frequency) * amplitude
+      const shakeY = Math.sin(realTime * frequency * 1.3 + 1) * amplitude
+      const shakeZ = Math.sin(realTime * frequency * 0.9 + 2) * amplitude
+      
+      x += shakeX
+      y += shakeY
+      z += shakeZ
+      
+      // After 3.5 seconds of intense vibration, explode!
+      if (vibrationTime > maxVibrationTime) {
+        setIsVibrating(false)
+        setIsExploding(true)
+        vibrationIntensityRef.current = 0
+        // Notify parent to create explosion particles at this position
+        if (onExplode) {
+          onExplode({
+            position: [baseX, baseY, baseZ],
+            color: particleColor,
+            id: data.id
+          })
+        }
+        // Hide cube after short delay
+        setTimeout(() => {
+          setIsDestroyed(true)
+          // Respawn after 3 seconds
+          setTimeout(() => {
+            setIsDestroyed(false)
+            setIsExploding(false)
+          }, 3000)
+        }, 100)
+      }
+    }
+    
+    // Cooldown effect - vibration decreases smoothly when mouse released
+    if (isCoolingDown && !isInteractive) {
+      // Capture cooldown start time on first frame
+      if (cooldownStartRef.current < 0) {
+        cooldownStartRef.current = realTime
+      }
+      
+      const cooldownTime = realTime - cooldownStartRef.current
+      const cooldownDuration = 0.5 // Half second to calm down
+      
+      // Decrease intensity from where it was
+      const startIntensity = vibrationIntensityRef.current
+      const cooldownProgress = Math.min(cooldownTime / cooldownDuration, 1)
+      const currentIntensity = startIntensity * (1 - cooldownProgress)
+      
+      if (currentIntensity > 0.01) {
+        // Still cooling down - apply diminishing vibration (matching new smaller amplitude)
+        const frequency = 5 + currentIntensity * 75
+        const amplitude = 0.005 + currentIntensity * 0.025
+        
+        const shakeX = Math.sin(realTime * frequency) * amplitude
+        const shakeY = Math.sin(realTime * frequency * 1.3 + 1) * amplitude
+        const shakeZ = Math.sin(realTime * frequency * 0.9 + 2) * amplitude
+        
+        x += shakeX
+        y += shakeY
+        z += shakeZ
+      } else {
+        // Cooldown complete
+        setIsCoolingDown(false)
+        vibrationIntensityRef.current = 0
+      }
+    }
     
     if (meshRef.current) {
       // Orbital motion
       meshRef.current.position.set(x, y, z)
       
-      // Rotate the cube itself (slower when hovered)
-      const rotSpeed = hovered ? 0.1 : 1
+      // Rotate the cube itself (slower when hovered, faster when vibrating/cooling)
+      const rotSpeed = (isVibrating || isCoolingDown) ? (2 * (vibrationIntensityRef.current + 0.5)) : (hovered ? 0.1 : 1)
       meshRef.current.rotation.x = effectiveTime * 0.5 * rotSpeed
       meshRef.current.rotation.y = effectiveTime * 0.3 * rotSpeed
       meshRef.current.rotation.z = effectiveTime * 0.2 * rotSpeed
@@ -88,13 +232,24 @@ const OrbitingParticle = memo(({ data, index, onModalOpen }) => {
       if (isInteractive) {
         const pulse = 1 + Math.sin(realTime * 3) * 0.1
         meshRef.current.scale.setScalar(hovered ? 1.5 : pulse)
+      } else if (isVibrating) {
+        // Grow slightly while vibrating (slower growth over 3.5 seconds)
+        const vibrationTime = realTime - vibrationStartRef.current
+        const growFactor = 1 + (vibrationTime / 3.5) * 0.3
+        meshRef.current.scale.setScalar(growFactor)
+      } else if (isCoolingDown) {
+        // Shrink back during cooldown
+        const growFactor = 1 + vibrationIntensityRef.current * 0.3
+        meshRef.current.scale.setScalar(growFactor)
+      } else {
+        meshRef.current.scale.setScalar(1)
       }
     }
     
     if (edgesRef.current) {
       // Match edges to mesh
       edgesRef.current.position.set(x, y, z)
-      const rotSpeed = hovered ? 0.1 : 1
+      const rotSpeed = (isVibrating || isCoolingDown) ? (2 * (vibrationIntensityRef.current + 0.5)) : (hovered ? 0.1 : 1)
       edgesRef.current.rotation.x = effectiveTime * 0.5 * rotSpeed
       edgesRef.current.rotation.y = effectiveTime * 0.3 * rotSpeed
       edgesRef.current.rotation.z = effectiveTime * 0.2 * rotSpeed
@@ -102,12 +257,54 @@ const OrbitingParticle = memo(({ data, index, onModalOpen }) => {
       if (isInteractive) {
         const pulse = 1 + Math.sin(realTime * 3) * 0.1
         edgesRef.current.scale.setScalar(hovered ? 1.5 : pulse)
+      } else if (isVibrating) {
+        const vibrationTime = realTime - vibrationStartRef.current
+        const growFactor = 1 + (vibrationTime / 3.5) * 0.3
+        edgesRef.current.scale.setScalar(growFactor)
+      } else if (isCoolingDown) {
+        const growFactor = 1 + vibrationIntensityRef.current * 0.3
+        edgesRef.current.scale.setScalar(growFactor)
+      } else {
+        edgesRef.current.scale.setScalar(1)
       }
     }
   })
   
+  const handlePointerDown = (e) => {
+    e.stopPropagation()
+    
+    // Disable interaction when turret is active
+    if (turretActive) return
+    
+    // For null cubes - trigger vibration and explosion on mousedown
+    if (!isInteractive && !isVibrating && !isCoolingDown && !isExploding && !isDestroyed) {
+      // Freeze current position
+      frozenPositionRef.current = [...basePositionRef.current]
+      setIsVibrating(true)
+      setIsCoolingDown(false)
+      vibrationStartRef.current = -1 // Will be set on first frame
+      document.body.style.cursor = 'auto'
+      return
+    }
+  }
+  
+  const handlePointerUp = (e) => {
+    e.stopPropagation()
+    
+    // If vibrating but not exploding, start cooldown
+    if (isVibrating && !isExploding) {
+      setIsVibrating(false)
+      setIsCoolingDown(true)
+      cooldownStartRef.current = -1 // Will be set on first frame
+    }
+  }
+  
   const handleClick = (e) => {
     e.stopPropagation()
+    
+    // Disable interaction when turret is active
+    if (turretActive) return
+    
     if (!isInteractive) return
     
     if (data.type === 'link') {
@@ -120,7 +317,11 @@ const OrbitingParticle = memo(({ data, index, onModalOpen }) => {
   
   const handlePointerOver = (e) => {
     e.stopPropagation()
-    if (isInteractive) {
+    
+    // Disable hover when turret is active
+    if (turretActive) return
+    
+    if (isInteractive || (!isInteractive && !isVibrating && !isCoolingDown && !isDestroyed)) {
       setHovered(true)
       document.body.style.cursor = 'pointer'
     }
@@ -129,9 +330,22 @@ const OrbitingParticle = memo(({ data, index, onModalOpen }) => {
   const handlePointerOut = () => {
     setHovered(false)
     document.body.style.cursor = 'auto'
+    
+    // If mouse leaves while vibrating, trigger cooldown
+    if (isVibrating && !isExploding) {
+      setIsVibrating(false)
+      setIsCoolingDown(true)
+      cooldownStartRef.current = -1
+    }
   }
   
-  const edgeColor = hovered ? '#ffffff' : particleColor
+  // Highlight effect: slightly brighter edge when highlighted by search
+  // Vibrating/cooling cubes glow intensely
+  const isGlowing = isVibrating || isCoolingDown
+  const vibratingColor = isGlowing ? '#ffffff' : particleColor
+  const edgeColor = hovered ? '#ffffff' : (isHighlighted ? '#ffffff' : vibratingColor)
+  const edgeOpacity = isGlowing ? 1.0 : (isHighlighted ? 1.0 : (isInteractive ? 0.8 : 0.6))
+  const faceOpacity = isGlowing ? 0.8 : (isHighlighted ? 0.5 : (isInteractive ? 0.3 : 0.1))
   const particleSize = isInteractive ? 0.2 : 0.1
   
   // Create edges geometry
@@ -140,20 +354,25 @@ const OrbitingParticle = memo(({ data, index, onModalOpen }) => {
     return new THREE.EdgesGeometry(boxGeo)
   }, [particleSize])
   
+  // Don't render if destroyed
+  if (isDestroyed) return null
+  
   return (
     <group>
       {/* Solid cube face (slightly transparent) */}
       <mesh
         ref={meshRef}
         onClick={handleClick}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
         onPointerOver={handlePointerOver}
         onPointerOut={handlePointerOut}
       >
         <boxGeometry args={[particleSize, particleSize, particleSize]} />
         <meshBasicMaterial 
-          color={particleColor}
+          color={isGlowing ? '#ffffff' : (isHighlighted ? '#ffffff' : particleColor)}
           transparent
-          opacity={isInteractive ? 0.3 : 0.1}
+          opacity={faceOpacity}
         />
       </mesh>
       
@@ -162,7 +381,7 @@ const OrbitingParticle = memo(({ data, index, onModalOpen }) => {
         <lineBasicMaterial 
           color={edgeColor}
           transparent
-          opacity={isInteractive ? 0.8 : 0.6}
+          opacity={edgeOpacity}
         />
       </lineSegments>
       
@@ -189,28 +408,254 @@ const OrbitingParticle = memo(({ data, index, onModalOpen }) => {
     </group>
   )
 }, (prevProps, nextProps) => {
-  // Only re-render if data or index changes, not activeModal
+  // Re-render if data, index, isHighlighted, shouldExplode, onMeshRef, or turretActive changes
   return prevProps.data.id === nextProps.data.id && 
-         prevProps.index === nextProps.index
+         prevProps.index === nextProps.index &&
+         prevProps.isHighlighted === nextProps.isHighlighted &&
+         prevProps.shouldExplode === nextProps.shouldExplode &&
+         prevProps.onMeshRef === nextProps.onMeshRef &&
+         prevProps.turretActive === nextProps.turretActive
 })
 
-// Particle system loaded from JSON
-const ParticleSystem = memo(({ onModalOpen }) => {
+// Explosion particle - flies outward and fades
+const ExplosionParticle = ({ startPosition, color, velocity, delay }) => {
+  const meshRef = useRef()
+  const startTime = useRef(null)
+  const [visible, setVisible] = useState(false)
+  
+  useFrame((state) => {
+    const time = state.clock.getElapsedTime()
+    
+    if (startTime.current === null) {
+      startTime.current = time + delay
+    }
+    
+    if (time < startTime.current) return
+    
+    if (!visible) setVisible(true)
+    
+    const elapsed = time - startTime.current
+    const lifetime = 1.5 // seconds
+    
+    if (elapsed > lifetime) {
+      if (meshRef.current) meshRef.current.visible = false
+      return
+    }
+    
+    if (meshRef.current) {
+      // Move outward with velocity, add gravity
+      const gravity = -2
+      meshRef.current.position.set(
+        startPosition[0] + velocity[0] * elapsed,
+        startPosition[1] + velocity[1] * elapsed + 0.5 * gravity * elapsed * elapsed,
+        startPosition[2] + velocity[2] * elapsed
+      )
+      
+      // Fade out
+      meshRef.current.material.opacity = 1 - (elapsed / lifetime)
+      
+      // Shrink
+      const scale = 0.05 * (1 - elapsed / lifetime * 0.5)
+      meshRef.current.scale.setScalar(scale)
+      
+      // Spin
+      meshRef.current.rotation.x = elapsed * 10
+      meshRef.current.rotation.y = elapsed * 8
+    }
+  })
+  
+  if (!visible) return null
+  
+  return (
+    <mesh ref={meshRef}>
+      <boxGeometry args={[1, 1, 1]} />
+      <meshBasicMaterial color={color} transparent opacity={1} />
+    </mesh>
+  )
+}
+
+// Fine explosion particle - smaller and faster fading
+const FineExplosionParticle = ({ startPosition, color, velocity, delay, size = 0.03 }) => {
+  const meshRef = useRef()
+  const startTime = useRef(null)
+  const [visible, setVisible] = useState(false)
+  
+  useFrame((state) => {
+    const time = state.clock.getElapsedTime()
+    
+    if (startTime.current === null) {
+      startTime.current = time + delay
+    }
+    
+    if (time < startTime.current) return
+    
+    if (!visible) setVisible(true)
+    
+    const elapsed = time - startTime.current
+    const lifetime = 1.2 // Shorter lifetime for finer particles
+    
+    if (elapsed > lifetime) {
+      if (meshRef.current) meshRef.current.visible = false
+      return
+    }
+    
+    if (meshRef.current) {
+      // Move outward with velocity, add slight gravity
+      const gravity = -1.5
+      meshRef.current.position.set(
+        startPosition[0] + velocity[0] * elapsed,
+        startPosition[1] + velocity[1] * elapsed + 0.5 * gravity * elapsed * elapsed,
+        startPosition[2] + velocity[2] * elapsed
+      )
+      
+      // Fade out faster
+      meshRef.current.material.opacity = 1 - (elapsed / lifetime)
+      
+      // Shrink more aggressively
+      const scale = size * (1 - elapsed / lifetime * 0.8)
+      meshRef.current.scale.setScalar(scale)
+    }
+  })
+  
+  if (!visible) return null
+  
+  return (
+    <mesh ref={meshRef}>
+      <sphereGeometry args={[1, 6, 6]} />
+      <meshBasicMaterial color={color} transparent opacity={1} />
+    </mesh>
+  )
+}
+
+// Explosion effect - spawns many fine particles for spectacular effect
+const ExplosionEffect = ({ position, color, id }) => {
+  const particleCount = 60 // More particles for finer effect
+  
+  // Generate random velocities for each particle with varied sizes
+  const particles = useMemo(() => {
+    return Array.from({ length: particleCount }, (_, i) => {
+      const theta = Math.random() * Math.PI * 2
+      const phi = Math.random() * Math.PI
+      // Varied speeds - some fast, some slow for depth
+      const speed = 0.5 + Math.random() * 3
+      // Varied sizes - mostly small with a few larger
+      const size = 0.015 + Math.random() * 0.04
+      return {
+        velocity: [
+          Math.sin(phi) * Math.cos(theta) * speed,
+          Math.cos(phi) * speed * 0.8 + 0.5, // Slight upward bias
+          Math.sin(phi) * Math.sin(theta) * speed
+        ],
+        delay: Math.random() * 0.15, // Slightly more stagger
+        size
+      }
+    })
+  }, [])
+  
+  return (
+    <group>
+      {particles.map((p, i) => (
+        <FineExplosionParticle
+          key={`${id}-${i}`}
+          startPosition={position}
+          color={color}
+          velocity={p.velocity}
+          delay={p.delay}
+          size={p.size}
+        />
+      ))}
+    </group>
+  )
+}
+
+// Particle system loaded from config (local or remote)
+const ParticleSystem = memo(({ onModalOpen, highlightedIds = [], cubePositionsRef, cubeMeshesRef, cubesToExplode = [], turretActive = false }) => {
   const [particles, setParticles] = useState([])
+  const [explosions, setExplosions] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [explodingCubes, setExplodingCubes] = useState(new Set())
   const groupRef = useRef()
+  const groupRotationRef = useRef(0) // Track group rotation for world position
+  
+  // Store mesh refs for raycasting
+  const handleMeshRef = useCallback((id, mesh, data) => {
+    if (cubeMeshesRef?.current) {
+      if (mesh) {
+        cubeMeshesRef.current[id] = { mesh, data }
+      } else {
+        delete cubeMeshesRef.current[id]
+      }
+    }
+  }, [cubeMeshesRef])
+  
+  // Track which cubes should explode based on cubesToExplode prop
+  useEffect(() => {
+    if (cubesToExplode.length > 0) {
+      setExplodingCubes(prev => {
+        const newSet = new Set(prev)
+        cubesToExplode.forEach(id => {
+          const numericId = typeof id === 'string' ? parseInt(id) : id
+          newSet.add(numericId)
+        })
+        return newSet
+      })
+      // Clear exploding status after animation completes
+      cubesToExplode.forEach(id => {
+        const numericId = typeof id === 'string' ? parseInt(id) : id
+        setTimeout(() => {
+          setExplodingCubes(prev => {
+            const newSet = new Set(prev)
+            newSet.delete(numericId)
+            return newSet
+          })
+        }, 3100)
+      })
+    }
+  }, [cubesToExplode])
+  
+  // Handle explosion from cube
+  const handleExplosion = useCallback((explosionData) => {
+    const explosionId = `${explosionData.id}-${Date.now()}`
+    setExplosions(prev => [...prev, { ...explosionData, explosionId }])
+    
+    // Remove explosion after animation completes
+    setTimeout(() => {
+      setExplosions(prev => prev.filter(e => e.explosionId !== explosionId))
+    }, 2000)
+  }, [])
+  
+  // Track cube positions for collision detection - include particle data
+  // Convert local position to world position by applying group rotation
+  const handlePositionUpdate = useCallback((id, position, particleData) => {
+    if (cubePositionsRef?.current) {
+      // Apply Y-axis rotation to convert local to world position
+      const rotY = groupRotationRef.current
+      const cosR = Math.cos(rotY)
+      const sinR = Math.sin(rotY)
+      const worldX = position[0] * cosR + position[2] * sinR
+      const worldY = position[1]
+      const worldZ = -position[0] * sinR + position[2] * cosR
+      cubePositionsRef.current[id] = { position: [worldX, worldY, worldZ], data: particleData }
+    }
+  }, [cubePositionsRef])
   
   useEffect(() => {
-    fetch('/particles.json')
-      .then(res => res.json())
-      .then(data => setParticles(data))
+    // Dynamic import to allow config changes without rebuilding
+    import('../config/particles.config.js')
+      .then(module => module.fetchParticles())
+      .then(data => {
+        setParticles(data)
+        setLoading(false)
+      })
       .catch(err => {
         console.error('Failed to load particles:', err)
         // Fallback particles
         setParticles([
-          { id: 1, name: null, type: null, src: null, distance: 4 },
-          { id: 2, name: null, type: null, src: null, distance: 5 },
-          { id: 3, name: null, type: null, src: null, distance: 3.5 }
+          { id: 1, name: null, type: null, color: '#00f5ff', src: null, distance: 4 },
+          { id: 2, name: null, type: null, color: '#00f5ff', src: null, distance: 5 },
+          { id: 3, name: null, type: null, color: '#00f5ff', src: null, distance: 3.5 }
         ])
+        setLoading(false)
       })
   }, [])
   
@@ -219,6 +664,8 @@ const ParticleSystem = memo(({ onModalOpen }) => {
     if (groupRef.current) {
       // Slow overall rotation
       groupRef.current.rotation.y = time * 0.02
+      // Store rotation for collision detection
+      groupRotationRef.current = time * 0.02
     }
   })
   
@@ -230,6 +677,21 @@ const ParticleSystem = memo(({ onModalOpen }) => {
           data={particle} 
           index={index}
           onModalOpen={onModalOpen}
+          isHighlighted={highlightedIds.includes(particle.id)}
+          onExplode={handleExplosion}
+          onPositionUpdate={handlePositionUpdate}
+          onMeshRef={handleMeshRef}
+          shouldExplode={explodingCubes.has(particle.id)}
+          turretActive={turretActive}
+        />
+      ))}
+      {/* Render explosions */}
+      {explosions.map(exp => (
+        <ExplosionEffect
+          key={exp.explosionId}
+          position={exp.position}
+          color={exp.color}
+          id={exp.explosionId}
         />
       ))}
     </group>
@@ -947,7 +1409,400 @@ const RealisticStarField = () => {
   )
 }
 
-const HeroScene = ({ onModalOpen }) => {
+// Bullet component - flies toward target with perspective trail
+const Bullet = ({ startPosition, direction, speed, onHit, cubePositionsRef, id }) => {
+  const meshRef = useRef()
+  const trailRef = useRef()
+  const startTime = useRef(null)
+  const [active, setActive] = useState(true)
+  
+  // Trail positions for perspective effect
+  const trailPositions = useRef([])
+  
+  useFrame((state) => {
+    if (!active) return
+    
+    const time = state.clock.getElapsedTime()
+    if (startTime.current === null) {
+      startTime.current = time
+    }
+    
+    const elapsed = time - startTime.current
+    const maxLifetime = 3 // seconds
+    
+    if (elapsed > maxLifetime) {
+      setActive(false)
+      return
+    }
+    
+    // Calculate current position
+    const distance = elapsed * speed
+    const x = startPosition[0] + direction[0] * distance
+    const y = startPosition[1] + direction[1] * distance
+    const z = startPosition[2] + direction[2] * distance
+    
+    if (meshRef.current) {
+      meshRef.current.position.set(x, y, z)
+      
+      // Store trail positions
+      trailPositions.current.push([x, y, z])
+      if (trailPositions.current.length > 10) {
+        trailPositions.current.shift()
+      }
+    }
+    
+    // Check collision with cubes
+    if (cubePositionsRef?.current) {
+      for (const [cubeId, cubePos] of Object.entries(cubePositionsRef.current)) {
+        const dx = x - cubePos[0]
+        const dy = y - cubePos[1]
+        const dz = z - cubePos[2]
+        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz)
+        
+        // Collision radius
+        if (dist < 0.2) {
+          setActive(false)
+          if (onHit) onHit(parseInt(cubeId))
+          return
+        }
+      }
+    }
+  })
+  
+  if (!active) return null
+  
+  return (
+    <group>
+      {/* Bullet head */}
+      <mesh ref={meshRef}>
+        <sphereGeometry args={[0.03, 8, 8]} />
+        <meshBasicMaterial color="#ff4444" />
+      </mesh>
+      {/* Trail effect - rendered as small spheres with decreasing size */}
+      {trailPositions.current.map((pos, i) => (
+        <mesh key={i} position={pos}>
+          <sphereGeometry args={[0.02 * (i / 10), 4, 4]} />
+          <meshBasicMaterial 
+            color="#ff6666" 
+            transparent 
+            opacity={i / 10} 
+          />
+        </mesh>
+      ))}
+    </group>
+  )
+}
+
+// Turret Orb - transforms into turret on hover, fires bullets on mousedown
+const TurretOrb = ({ cubePositionsRef, onCubeHit }) => {
+  const groupRef = useRef()
+  const [isHovered, setIsHovered] = useState(false)
+  const [isFiring, setIsFiring] = useState(false)
+  const [bullets, setBullets] = useState([])
+  const [aimDirection, setAimDirection] = useState([0, 1, 0])
+  const lastFireTime = useRef(0)
+  const turretPosition = useMemo(() => [0, -3, 0], []) // Bottom center, at same Z as black hole
+  
+  // Handle mouse move for aiming
+  useFrame((state) => {
+    if (isHovered || isFiring) {
+      // Get mouse position in normalized device coordinates
+      const mouse = state.mouse
+      
+      // Calculate aim direction from turret toward mouse position in 3D space
+      const aimX = mouse.x * 3
+      const aimY = mouse.y * 2 + 1
+      const aimZ = -2
+      
+      // Normalize direction
+      const length = Math.sqrt(aimX * aimX + aimY * aimY + aimZ * aimZ)
+      setAimDirection([aimX / length, aimY / length, aimZ / length])
+      
+      // Fire bullets while mouse is down
+      if (isFiring) {
+        const time = state.clock.getElapsedTime()
+        if (time - lastFireTime.current > 0.15) { // Fire rate: ~6.6 bullets/second
+          lastFireTime.current = time
+          
+          const bulletId = `bullet-${Date.now()}-${Math.random()}`
+          setBullets(prev => [...prev, {
+            id: bulletId,
+            startPosition: [...turretPosition],
+            direction: [...aimDirection],
+            speed: 8
+          }])
+          
+          // Remove bullet after lifetime
+          setTimeout(() => {
+            setBullets(prev => prev.filter(b => b.id !== bulletId))
+          }, 3000)
+        }
+      }
+    }
+    
+    // Animate turret rotation
+    if (groupRef.current && (isHovered || isFiring)) {
+      // Point turret toward aim direction
+      const targetRotationY = Math.atan2(aimDirection[0], -aimDirection[2])
+      const targetRotationX = Math.asin(-aimDirection[1])
+      
+      groupRef.current.rotation.y = THREE.MathUtils.lerp(
+        groupRef.current.rotation.y,
+        targetRotationY,
+        0.1
+      )
+      groupRef.current.rotation.x = THREE.MathUtils.lerp(
+        groupRef.current.rotation.x,
+        targetRotationX * 0.5,
+        0.1
+      )
+    }
+  })
+  
+  const handleBulletHit = useCallback((cubeId) => {
+    if (onCubeHit) onCubeHit(cubeId)
+  }, [onCubeHit])
+  
+  const handlePointerOver = () => {
+    setIsHovered(true)
+    document.body.style.cursor = 'crosshair'
+  }
+  
+  const handlePointerOut = () => {
+    if (!isFiring) {
+      setIsHovered(false)
+      document.body.style.cursor = 'auto'
+    }
+  }
+  
+  const handlePointerDown = (e) => {
+    e.stopPropagation()
+    setIsFiring(true)
+  }
+  
+  const handlePointerUp = () => {
+    setIsFiring(false)
+    if (!isHovered) {
+      document.body.style.cursor = 'auto'
+    }
+  }
+  
+  // Also handle global pointer up
+  useEffect(() => {
+    const handleGlobalPointerUp = () => {
+      setIsFiring(false)
+    }
+    window.addEventListener('pointerup', handleGlobalPointerUp)
+    return () => window.removeEventListener('pointerup', handleGlobalPointerUp)
+  }, [])
+  
+  // Scale based on hover state (1x normal, 10x when hovered)
+  const scale = isHovered || isFiring ? 1.5 : 0.5 // Visible size
+  
+  return (
+    <group position={turretPosition}>
+      {/* Orb / Turret */}
+      <group 
+        ref={groupRef}
+        scale={[scale, scale, scale]}
+        onPointerOver={handlePointerOver}
+        onPointerOut={handlePointerOut}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+      >
+        {/* Base orb - simple full sphere for visibility */}
+        <mesh>
+          <sphereGeometry args={[0.3, 32, 32]} />
+          <meshBasicMaterial color="#00f5ff" transparent opacity={0.8} />
+        </mesh>
+        
+        {/* Inner glow */}
+        <mesh>
+          <sphereGeometry args={[0.25, 16, 16]} />
+          <meshBasicMaterial color="#ffffff" transparent opacity={0.5} />
+        </mesh>
+        
+        {/* Turret barrel - visible when hovered */}
+        {(isHovered || isFiring) && (
+          <group>
+            {/* Turret body */}
+            <mesh position={[0, 0.3, 0]}>
+              <cylinderGeometry args={[0.15, 0.25, 0.3, 12]} />
+              <meshBasicMaterial color="#333333" />
+            </mesh>
+            {/* Barrel */}
+            <mesh position={[0, 0.6, 0]}>
+              <cylinderGeometry args={[0.06, 0.06, 0.5, 8]} />
+              <meshBasicMaterial color="#666666" />
+            </mesh>
+            {/* Muzzle glow when firing */}
+            {isFiring && (
+              <mesh position={[0, 0.9, 0]}>
+                <sphereGeometry args={[0.1, 8, 8]} />
+                <meshBasicMaterial color="#ff4444" transparent opacity={0.8} />
+              </mesh>
+            )}
+          </group>
+        )}
+      </group>
+      
+      {/* Render bullets */}
+      {bullets.map(bullet => (
+        <Bullet
+          key={bullet.id}
+          id={bullet.id}
+          startPosition={bullet.startPosition}
+          direction={bullet.direction}
+          speed={bullet.speed}
+          cubePositionsRef={cubePositionsRef}
+          onHit={handleBulletHit}
+        />
+      ))}
+    </group>
+  )
+}
+
+// 3D Bullet component - small glowing sphere
+const Bullet3D = memo(({ position, id }) => {
+  const groupRef = useRef()
+  
+  useFrame(() => {
+    if (groupRef.current) {
+      groupRef.current.position.set(position[0], position[1], position[2])
+    }
+  })
+  
+  return (
+    <group ref={groupRef} position={position}>
+      {/* Core bullet */}
+      <mesh>
+        <sphereGeometry args={[0.012, 6, 6]} />
+        <meshBasicMaterial color="#ff00ff" />
+      </mesh>
+      {/* Outer glow */}
+      <mesh>
+        <sphereGeometry args={[0.022, 6, 6]} />
+        <meshBasicMaterial color="#ff88ff" transparent opacity={0.3} />
+      </mesh>
+    </group>
+  )
+})
+
+const HeroScene = ({ onModalOpen, highlightedIds = [], onCubePositionsUpdate, onBulletHitCube, cubesToExplode = [], bulletPositionsRef, bullets3D = [], onBulletHit, turretActive = false }) => {
+  // Track cube positions for bullet collision
+  const cubePositionsRef = useRef({})
+  const cubeMeshesRef = useRef({}) // Store actual mesh refs for raycasting
+  const hitBulletsRef = useRef(new Set()) // Track bullets that already hit something
+  const { camera, size } = useThree()
+  
+  // Real-time 3D collision detection - sphere to sphere
+  useFrame(() => {
+    if (!bulletPositionsRef?.current) return
+    
+    const bullets = bulletPositionsRef.current
+    if (bullets.length === 0) return
+    
+    // Get all cube positions
+    const cubeEntries = Object.entries(cubePositionsRef.current)
+    if (cubeEntries.length === 0) return
+    
+    // Collision radius (bullet radius + cube radius) - generous for easier hits
+    const collisionRadius = 0.4
+    
+    for (const bullet of bullets) {
+      // Skip bullets that already hit something
+      if (hitBulletsRef.current.has(bullet.id)) continue
+      
+      for (const [cubeId, cubeInfo] of cubeEntries) {
+        if (!cubeInfo) continue
+        
+        let pos3D, cubeData
+        if (Array.isArray(cubeInfo)) {
+          pos3D = cubeInfo
+          cubeData = null
+        } else if (cubeInfo && cubeInfo.position) {
+          pos3D = cubeInfo.position
+          cubeData = cubeInfo.data || null
+        } else {
+          continue
+        }
+        
+        if (!pos3D || pos3D.length < 3) continue
+        
+        // 3D distance check
+        const dx = bullet.x3D - pos3D[0]
+        const dy = bullet.y3D - pos3D[1]
+        const dz = bullet.z3D - pos3D[2]
+        const distance = Math.sqrt(dx * dx + dy * dy + dz * dz)
+        
+        if (distance < collisionRadius) {
+          // HIT! Mark bullet and notify parent
+          hitBulletsRef.current.add(bullet.id)
+          
+          // Clear after short delay
+          setTimeout(() => {
+            hitBulletsRef.current.delete(bullet.id)
+          }, 100)
+          
+          // Notify parent
+          if (onBulletHit) {
+            onBulletHit(bullet.id, cubeId, cubeData)
+          }
+          
+          break // One bullet hits one cube
+        }
+      }
+    }
+  })
+  
+  // Update parent with screen positions of cubes (legacy)
+  useFrame(() => {
+    if (!onCubePositionsUpdate || !camera) return
+    
+    try {
+      const entries = Object.entries(cubePositionsRef.current)
+      if (entries.length === 0) return
+      
+      const screenPositions = {}
+      for (const [id, cubeInfo] of entries) {
+        // Handle both old format (array) and new format (object with position)
+        let pos3D, cubeData
+        if (Array.isArray(cubeInfo)) {
+          pos3D = cubeInfo
+          cubeData = null
+        } else if (cubeInfo && cubeInfo.position) {
+          pos3D = cubeInfo.position
+          cubeData = cubeInfo.data || null
+        } else {
+          continue // Skip invalid entries
+        }
+        
+        if (!pos3D || pos3D.length < 3) continue
+        
+        // Convert 3D position to screen coordinates
+        const vector = new THREE.Vector3(pos3D[0], pos3D[1], pos3D[2])
+        vector.project(camera)
+        
+        const widthHalf = window.innerWidth / 2
+        const heightHalf = window.innerHeight / 2
+        
+        screenPositions[id] = {
+          x: (vector.x * widthHalf) + widthHalf,
+          y: -(vector.y * heightHalf) + heightHalf,
+          z: vector.z,
+          pos3D: pos3D,
+          data: cubeData
+        }
+      }
+      
+      if (Object.keys(screenPositions).length > 0) {
+        onCubePositionsUpdate(screenPositions)
+      }
+    } catch (err) {
+      console.error('Error updating cube positions:', err)
+    }
+  })
+  
   return (
     <>
       {/* Lighting - dimmer for space effect */}
@@ -963,7 +1818,21 @@ const HeroScene = ({ onModalOpen }) => {
       {/* Particles from JSON */}
       <ParticleSystem 
         onModalOpen={onModalOpen}
+        highlightedIds={highlightedIds}
+        cubePositionsRef={cubePositionsRef}
+        cubeMeshesRef={cubeMeshesRef}
+        cubesToExplode={cubesToExplode}
+        turretActive={turretActive}
       />
+      
+      {/* 3D Bullets */}
+      {bullets3D.map(bullet => (
+        <Bullet3D
+          key={bullet.id}
+          id={bullet.id}
+          position={[bullet.x3D, bullet.y3D, bullet.z3D]}
+        />
+      ))}
     </>
   )
 }

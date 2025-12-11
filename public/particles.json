@@ -3,13 +3,17 @@
     "id": 1,
     "name": "About Me",
     "type": "html",
-    "src": "<h2>About Me</h2><p>Full-stack developer passionate about creating immersive web experiences.</p>",
+    "color": "#ffffff",
+    "isListed": true,
+    "src": "<h3>💻 Full-Stack Developer</h3><p>10+ Years Experience in Front-End, Back-End & Databases</p><ul><li>JavaScript, TypeScript, Node.js, Fastify, Next.js</li><li>PHP, MySQL, PostgreSQL, MariaDB, MongoDB</li></ul><h3>🤖 AI & ML Experience</h3><ul><li><strong>LLMs:</strong> GPT-4, Claude, Gemini, LLaMA</li><li><strong>SLMs:</strong> Phi-3, Mistral 7B, Ollama</li><li><strong>APIs:</strong> OpenAI, Anthropic, Google AI</li><li><strong>Frameworks:</strong> LangChain, LlamaIndex, Hugging Face</li><li><strong>ML Models:</strong> NSFWJS, MobileNet v2, COCO-SSD, MediaPipe</li><li><strong>Tools:</strong> TensorFlow.js, Pinecone, ChromaDB</li><li><strong>Browser ML:</strong> Manifest V3, Chrome APIs</li></ul>",
     "distance": 4
   },
   {
     "id": 2,
     "name": "GitHub",
     "type": "link",
+    "color": "#f0db4f",
+    "isListed": false,
     "src": "https://github.com/caglarorhan",
     "distance": 5
   },
@@ -17,34 +21,44 @@
     "id": 3,
     "name": "LinkedIn",
     "type": "link",
+    "color": "#0077b5",
+    "isListed": false,
     "src": "https://linkedin.com/in/caglarorhan",
     "distance": 4.5
   },
   {
     "id": 4,
     "name": "Portfolio",
-    "type": "photo",
-    "src": "https://via.placeholder.com/400x300/0a0a1a/00f5ff?text=Portfolio",
+    "type": "html",
+    "color": "#ff00ff",
+    "isListed": true,
+    "src": "<h3>🧩 Browser Extensions</h3><ul><li><a href='https://picban.com' target='_blank'>PicBan</a></li></ul><h3>🎮 Online Games</h3><ul><li><a href='https://cybergridassault.com' target='_blank'>CyberGrid Assault</a></li></ul><h3>🌐 Web Apps</h3><ul><li><a href='https://picdia.com' target='_blank'>PicDia</a></li><li><a href='https://replicid.com' target='_blank'>ReplicID</a></li><li><a href='https://synercium.com' target='_blank'>Synercium</a></li></ul>",
     "distance": 5.5
   },
   {
     "id": 5,
     "name": "Contact",
     "type": "html",
-    "src": "<h2>Contact</h2><p>Email: hello@example.com</p><p>Let's build something amazing together.</p>",
+    "color": "#00ff88",
+    "isListed": true,
+    "src": "<h3>📧 Get In Touch</h3><form class='contact-form' action='https://formspree.io/f/YOUR_FORM_ID' method='POST'><div class='form-group'><label>Name</label><input type='text' name='name' placeholder='Your name' required /></div><div class='form-group'><label>Email</label><input type='email' name='email' placeholder='your@email.com' required /></div><div class='form-group'><label>Message</label><textarea name='message' placeholder='Your message...' rows='4' required></textarea></div><button type='submit' class='submit-btn'>Send Message</button></form>",
     "distance": 6
   },
   {
     "id": 100,
-    "name": null,
-    "type": null,
-    "src": null,
+    "name": "Surfin USA",
+    "type": "photo",
+    "color": "#ff0000",
+    "isListed": false,
+    "src": "/surfinusa.jpg",
     "distance": 3.5
   },
   {
     "id": 101,
     "name": null,
     "type": null,
+    "color": "#00f5ff",
+    "isListed": false,
     "src": null,
     "distance": 4.2
   },
@@ -52,6 +66,8 @@
     "id": 102,
     "name": null,
     "type": null,
+    "color": "#00f5ff",
+    "isListed": false,
     "src": null,
     "distance": 3.8
   },
@@ -59,6 +75,8 @@
     "id": 103,
     "name": null,
     "type": null,
+    "color": "#00f5ff",
+    "isListed": false,
     "src": null,
     "distance": 5.0
   },
@@ -66,6 +84,8 @@
     "id": 104,
     "name": null,
     "type": null,
+    "color": "#00f5ff",
+    "isListed": false,
     "src": null,
     "distance": 4.7
   },
@@ -73,6 +93,8 @@
     "id": 105,
     "name": null,
     "type": null,
+    "color": "#00f5ff",
+    "isListed": false,
     "src": null,
     "distance": 3.2
   },
@@ -80,6 +102,8 @@
     "id": 106,
     "name": null,
     "type": null,
+    "color": "#00f5ff",
+    "isListed": false,
     "src": null,
     "distance": 5.8
   },
@@ -87,6 +111,8 @@
     "id": 107,
     "name": null,
     "type": null,
+    "color": "#00f5ff",
+    "isListed": false,
     "src": null,
     "distance": 4.0
   },
@@ -94,6 +120,8 @@
     "id": 108,
     "name": null,
     "type": null,
+    "color": "#00f5ff",
+    "isListed": false,
     "src": null,
     "distance": 6.2
   },
@@ -101,6 +129,8 @@
     "id": 109,
     "name": null,
     "type": null,
+    "color": "#00f5ff",
+    "isListed": false,
     "src": null,
     "distance": 3.6
   },
@@ -108,6 +138,8 @@
     "id": 110,
     "name": null,
     "type": null,
+    "color": "#00f5ff",
+    "isListed": false,
     "src": null,
     "distance": 5.3
   },
@@ -115,6 +147,8 @@
     "id": 111,
     "name": null,
     "type": null,
+    "color": "#00f5ff",
+    "isListed": false,
     "src": null,
     "distance": 4.4
   },
@@ -122,6 +156,8 @@
     "id": 112,
     "name": null,
     "type": null,
+    "color": "#00f5ff",
+    "isListed": false,
     "src": null,
     "distance": 3.9
   },
@@ -129,6 +165,8 @@
     "id": 113,
     "name": null,
     "type": null,
+    "color": "#00f5ff",
+    "isListed": false,
     "src": null,
     "distance": 5.6
   },
@@ -136,7 +174,189 @@
     "id": 114,
     "name": null,
     "type": null,
+    "color": "#00f5ff",
+    "isListed": false,
     "src": null,
     "distance": 4.1
+  },
+  {
+    "id": 115,
+    "name": null,
+    "type": null,
+    "color": "#00f5ff",
+    "isListed": false,
+    "src": null,
+    "distance": 3.3
+  },
+  {
+    "id": 116,
+    "name": null,
+    "type": null,
+    "color": "#00f5ff",
+    "isListed": false,
+    "src": null,
+    "distance": 5.9
+  },
+  {
+    "id": 117,
+    "name": null,
+    "type": null,
+    "color": "#00f5ff",
+    "isListed": false,
+    "src": null,
+    "distance": 4.6
+  },
+  {
+    "id": 118,
+    "name": null,
+    "type": null,
+    "color": "#00f5ff",
+    "isListed": false,
+    "src": null,
+    "distance": 3.7
+  },
+  {
+    "id": 119,
+    "name": null,
+    "type": null,
+    "color": "#00f5ff",
+    "isListed": false,
+    "src": null,
+    "distance": 6.5
+  },
+  {
+    "id": 120,
+    "name": null,
+    "type": null,
+    "color": "#00f5ff",
+    "isListed": false,
+    "src": null,
+    "distance": 4.3
+  },
+  {
+    "id": 121,
+    "name": null,
+    "type": null,
+    "color": "#00f5ff",
+    "isListed": false,
+    "src": null,
+    "distance": 5.1
+  },
+  {
+    "id": 122,
+    "name": null,
+    "type": null,
+    "color": "#00f5ff",
+    "isListed": false,
+    "src": null,
+    "distance": 3.4
+  },
+  {
+    "id": 123,
+    "name": null,
+    "type": null,
+    "color": "#00f5ff",
+    "isListed": false,
+    "src": null,
+    "distance": 6.0
+  },
+  {
+    "id": 124,
+    "name": null,
+    "type": null,
+    "color": "#00f5ff",
+    "isListed": false,
+    "src": null,
+    "distance": 4.8
+  },
+  {
+    "id": 125,
+    "name": null,
+    "type": null,
+    "color": "#00f5ff",
+    "isListed": false,
+    "src": null,
+    "distance": 3.1
+  },
+  {
+    "id": 126,
+    "name": null,
+    "type": null,
+    "color": "#00f5ff",
+    "isListed": false,
+    "src": null,
+    "distance": 5.4
+  },
+  {
+    "id": 127,
+    "name": null,
+    "type": null,
+    "color": "#00f5ff",
+    "isListed": false,
+    "src": null,
+    "distance": 4.5
+  },
+  {
+    "id": 128,
+    "name": null,
+    "type": null,
+    "color": "#00f5ff",
+    "isListed": false,
+    "src": null,
+    "distance": 6.3
+  },
+  {
+    "id": 129,
+    "name": null,
+    "type": null,
+    "color": "#00f5ff",
+    "isListed": false,
+    "src": null,
+    "distance": 3.8
+  },
+  {
+    "id": 130,
+    "name": null,
+    "type": null,
+    "color": "#00f5ff",
+    "isListed": false,
+    "src": null,
+    "distance": 5.7
+  },
+  {
+    "id": 131,
+    "name": null,
+    "type": null,
+    "color": "#00f5ff",
+    "isListed": false,
+    "src": null,
+    "distance": 4.2
+  },
+  {
+    "id": 132,
+    "name": null,
+    "type": null,
+    "color": "#00f5ff",
+    "isListed": false,
+    "src": null,
+    "distance": 6.8
+  },
+  {
+    "id": 133,
+    "name": null,
+    "type": null,
+    "color": "#00f5ff",
+    "isListed": false,
+    "src": null,
+    "distance": 3.5
+  },
+  {
+    "id": 134,
+    "name": null,
+    "type": null,
+    "color": "#00f5ff",
+    "isListed": false,
+    "src": null,
+    "distance": 5.2
   }
 ]

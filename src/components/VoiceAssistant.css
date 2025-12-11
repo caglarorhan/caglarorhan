@@ -1,0 +1,299 @@
+/* Voice Assistant - Cyberpunk Style */
+
+/* Floating Button */
+.voice-assistant-btn {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 2px solid #00ffff;
+  background: rgba(0, 0, 0, 0.9);
+  color: #00ffff;
+  font-size: 24px;
+  cursor: pointer;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 
+    0 0 20px rgba(0, 255, 255, 0.4),
+    inset 0 0 20px rgba(0, 255, 255, 0.1);
+  font-family: 'Orbitron', sans-serif;
+}
+
+.voice-assistant-btn .btn-icon {
+  font-size: 24px;
+  z-index: 2;
+}
+
+.voice-assistant-btn .btn-pulse {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid #00ffff;
+  opacity: 0;
+  animation: pulse-ring 2s ease-out infinite;
+}
+
+.voice-assistant-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 
+    0 0 30px rgba(0, 255, 255, 0.6),
+    inset 0 0 30px rgba(0, 255, 255, 0.2);
+  border-color: #00ffff;
+}
+
+.voice-assistant-btn.active {
+  border-color: #ff00ff;
+  color: #ff00ff;
+  box-shadow: 
+    0 0 30px rgba(255, 0, 255, 0.5),
+    inset 0 0 20px rgba(255, 0, 255, 0.1);
+}
+
+.voice-assistant-btn.speaking {
+  animation: speaking-pulse 0.5s ease-in-out infinite;
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+@keyframes speaking-pulse {
+  0%, 100% {
+    box-shadow: 
+      0 0 20px rgba(0, 255, 255, 0.4),
+      inset 0 0 20px rgba(0, 255, 255, 0.1);
+  }
+  50% {
+    box-shadow: 
+      0 0 40px rgba(0, 255, 255, 0.8),
+      inset 0 0 30px rgba(0, 255, 255, 0.3);
+  }
+}
+
+/* Assistant Panel */
+.voice-assistant-panel {
+  position: fixed;
+  bottom: 100px;
+  right: 30px;
+  width: 340px;
+  max-height: 450px;
+  background: rgba(5, 5, 15, 0.95);
+  border: 1px solid #00ffff;
+  border-radius: 12px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 
+    0 0 30px rgba(0, 255, 255, 0.3),
+    inset 0 0 50px rgba(0, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  font-family: 'Orbitron', 'Courier New', monospace;
+  overflow: hidden;
+}
+
+/* Header */
+.assistant-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: linear-gradient(90deg, rgba(0, 255, 255, 0.15), rgba(255, 0, 255, 0.1));
+  border-bottom: 1px solid rgba(0, 255, 255, 0.3);
+}
+
+.assistant-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #00ffff;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.assistant-status {
+  font-size: 11px;
+  color: #888;
+}
+
+/* Chat Area */
+.assistant-chat {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 280px;
+  min-height: 150px;
+}
+
+.assistant-chat::-webkit-scrollbar {
+  width: 4px;
+}
+
+.assistant-chat::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 255, 0.5);
+  border-radius: 2px;
+}
+
+/* Welcome Message */
+.chat-welcome {
+  text-align: center;
+  color: #888;
+  font-size: 13px;
+  padding: 20px;
+}
+
+.chat-welcome p {
+  margin: 8px 0;
+}
+
+/* Chat Messages */
+.chat-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  animation: fadeIn 0.3s ease;
+}
+
+.chat-message.user {
+  background: linear-gradient(135deg, rgba(255, 0, 255, 0.2), rgba(255, 0, 136, 0.1));
+  border: 1px solid rgba(255, 0, 255, 0.3);
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.chat-message.assistant {
+  background: linear-gradient(135deg, rgba(0, 255, 255, 0.15), rgba(0, 200, 150, 0.1));
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  align-self: flex-start;
+}
+
+.chat-message.interim {
+  opacity: 0.6;
+}
+
+.message-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.message-text {
+  color: #e0e0e0;
+}
+
+.chat-error {
+  color: #ff4444;
+  font-size: 12px;
+  padding: 8px;
+  background: rgba(255, 0, 0, 0.1);
+  border-radius: 4px;
+  text-align: center;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Controls */
+.assistant-controls {
+  display: flex;
+  gap: 10px;
+  padding: 12px 16px;
+  border-top: 1px solid rgba(0, 255, 255, 0.2);
+  justify-content: center;
+}
+
+.control-btn {
+  padding: 10px 20px;
+  border-radius: 6px;
+  border: 1px solid #00ffff;
+  background: rgba(0, 255, 255, 0.1);
+  color: #00ffff;
+  font-size: 13px;
+  font-family: 'Orbitron', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.control-btn:hover:not(:disabled) {
+  background: rgba(0, 255, 255, 0.25);
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+}
+
+.control-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.control-btn.mic.active {
+  border-color: #ff00ff;
+  color: #ff00ff;
+  background: rgba(255, 0, 255, 0.2);
+  animation: pulse-btn 1s ease-in-out infinite;
+}
+
+.control-btn.stop {
+  border-color: #ff4444;
+  color: #ff4444;
+  background: rgba(255, 68, 68, 0.1);
+}
+
+@keyframes pulse-btn {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(255, 0, 255, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(255, 0, 255, 0.6);
+  }
+}
+
+/* Hint */
+.assistant-hint {
+  text-align: center;
+  font-size: 11px;
+  color: #666;
+  padding: 8px 16px 12px;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .voice-assistant-btn {
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+  }
+  
+  .voice-assistant-panel {
+    right: 10px;
+    left: 10px;
+    width: auto;
+    bottom: 80px;
+  }
+}
