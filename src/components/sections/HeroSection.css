@@ -327,12 +327,28 @@
   top: 20px;
   right: 20px;
   z-index: 100;
-  background: rgba(10, 10, 20, 0.7);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(0, 245, 255, 0.3);
+  background: rgba(10, 10, 20, 0.65);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(0, 245, 255, 0.4);
   border-radius: 8px;
   padding: 15px 20px;
   min-width: 180px;
+  /* Sci-fi hologram perspective tilt - more aggressive */
+  transform: perspective(600px) rotateY(-15deg) rotateX(4deg);
+  transform-origin: right center;
+  box-shadow: 
+    0 0 20px rgba(0, 245, 255, 0.15),
+    inset 0 0 30px rgba(0, 245, 255, 0.05),
+    -10px 0 20px rgba(0, 245, 255, 0.15);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.info-card-legend:hover {
+  transform: perspective(600px) rotateY(-12deg) rotateX(3deg);
+  box-shadow: 
+    0 0 30px rgba(0, 245, 255, 0.25),
+    inset 0 0 40px rgba(0, 245, 255, 0.1),
+    -12px 0 25px rgba(0, 245, 255, 0.2);
 }
 
 .legend-title {

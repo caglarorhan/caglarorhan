@@ -1,7 +1,8 @@
 import { useRef, useMemo, useState, useEffect, memo, useCallback } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
-import { Sphere, Float, Html, Billboard } from '@react-three/drei'
+import { Sphere, Float, Html, Billboard, useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
+import FuturisticModal from '../components/FuturisticModal'
 
 const BlackHole = () => {
   const blackHoleRef = useRef()
@@ -15,6 +16,442 @@ const BlackHole = () => {
         </Sphere>
       </group>
     </Float>
+  )
+}
+
+const Satellite = ({ onObjectClick }) => {
+  const satelliteRef = useRef()
+  const { scene } = useGLTF('/satellite.glb')
+  const isDragging = useRef(false)
+  const dragStart = useRef({ x: 0, y: 0 })
+  const savedPosition = useRef(null)
+  const orbitTime = useRef(0)
+  
+  const clonedScene = useMemo(() => scene.clone(), [scene])
+  
+  useFrame((state, delta) => {
+    if (satelliteRef.current && !isDragging.current) {
+      orbitTime.current += delta
+      const time = orbitTime.current
+      
+      const radius = 8
+      const speed = 0.15
+      const angle = time * speed
+      
+      satelliteRef.current.position.x = Math.cos(angle) * radius
+      satelliteRef.current.position.z = Math.sin(angle) * radius - 5
+      satelliteRef.current.position.y = Math.sin(time * 0.3) * 0.5
+      satelliteRef.current.rotation.y = -angle + Math.PI / 2
+      satelliteRef.current.rotation.z = time * 0.2
+    }
+  })
+  
+  const handlePointerDown = (e) => {
+    e.stopPropagation()
+    if (!e.point || !satelliteRef.current) return
+    
+    isDragging.current = true
+    dragStart.current = { x: e.point.x, y: e.point.y }
+    savedPosition.current = satelliteRef.current.position.clone()
+    document.body.style.cursor = 'grabbing'
+  }
+  
+  const handlePointerUp = (e) => {
+    e.stopPropagation()
+    if (!e.point || !dragStart.current) {
+      isDragging.current = false
+      document.body.style.cursor = 'auto'
+      return
+    }
+    
+    const dragDistance = Math.sqrt(
+      Math.pow(e.point.x - dragStart.current.x, 2) + 
+      Math.pow(e.point.y - dragStart.current.y, 2)
+    )
+    
+    if (dragDistance < 0.5) {
+      onObjectClick('satellite')
+    }
+    
+    isDragging.current = false
+    document.body.style.cursor = 'auto'
+  }
+  
+  const handlePointerMove = (e) => {
+    if (isDragging.current && satelliteRef.current && savedPosition.current && e.point) {
+      e.stopPropagation()
+      const dx = e.point.x - dragStart.current.x
+      const dy = e.point.y - dragStart.current.y
+      satelliteRef.current.position.x = savedPosition.current.x + dx
+      satelliteRef.current.position.y = savedPosition.current.y + dy
+    }
+  }
+  
+  return (
+    <group 
+      ref={satelliteRef}
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      onPointerMove={handlePointerMove}
+      onPointerOver={(e) => { e.stopPropagation(); document.body.style.cursor = 'grab' }}
+      onPointerOut={(e) => { e.stopPropagation(); document.body.style.cursor = 'auto' }}
+    >
+      <primitive object={clonedScene} scale={0.3} />
+    </group>
+  )
+}
+
+const Astronaut = ({ orbitRadius = 5, orbitSpeed = 0.2, orbitOffset = 0, yOffset = 0, onObjectClick }) => {
+  const astronautRef = useRef()
+  const { scene } = useGLTF('/astronaut.glb')
+  const isDragging = useRef(false)
+  const dragStart = useRef({ x: 0, y: 0 })
+  const savedPosition = useRef(null)
+  const orbitTime = useRef(0)
+  
+  const clonedScene = useMemo(() => scene.clone(), [scene])
+  
+  useFrame((state, delta) => {
+    if (astronautRef.current && !isDragging.current) {
+      orbitTime.current += delta
+      const time = orbitTime.current
+      
+      const angle = time * orbitSpeed + orbitOffset
+      
+      astronautRef.current.position.x = Math.cos(angle) * orbitRadius
+      astronautRef.current.position.z = Math.sin(angle) * orbitRadius + 2
+      astronautRef.current.position.y = Math.sin(time * 0.4 + orbitOffset) * 0.8 + yOffset
+      
+      astronautRef.current.rotation.y = time * 0.3 + orbitOffset
+      astronautRef.current.rotation.x = time * 0.15 + orbitOffset
+      astronautRef.current.rotation.z = time * 0.2 + orbitOffset
+    }
+  })
+  
+  const handlePointerDown = (e) => {
+    e.stopPropagation()
+    if (!e.point || !astronautRef.current) return
+    
+    isDragging.current = true
+    dragStart.current = { x: e.point.x, y: e.point.y }
+    savedPosition.current = astronautRef.current.position.clone()
+    document.body.style.cursor = 'grabbing'
+  }
+  
+  const handlePointerUp = (e) => {
+    e.stopPropagation()
+    if (!e.point || !dragStart.current) {
+      isDragging.current = false
+      document.body.style.cursor = 'auto'
+      return
+    }
+    
+    const dragDistance = Math.sqrt(
+      Math.pow(e.point.x - dragStart.current.x, 2) + 
+      Math.pow(e.point.y - dragStart.current.y, 2)
+    )
+    
+    if (dragDistance < 0.5) {
+      onObjectClick('astronaut')
+    }
+    
+    isDragging.current = false
+    document.body.style.cursor = 'auto'
+  }
+  
+  const handlePointerMove = (e) => {
+    if (isDragging.current && astronautRef.current && savedPosition.current && e.point) {
+      e.stopPropagation()
+      const dx = e.point.x - dragStart.current.x
+      const dy = e.point.y - dragStart.current.y
+      astronautRef.current.position.x = savedPosition.current.x + dx
+      astronautRef.current.position.y = savedPosition.current.y + dy
+    }
+  }
+  
+  return (
+    <group 
+      ref={astronautRef}
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      onPointerMove={handlePointerMove}
+      onPointerOver={(e) => { e.stopPropagation(); document.body.style.cursor = 'grab' }}
+      onPointerOut={(e) => { e.stopPropagation(); document.body.style.cursor = 'auto' }}
+    >
+      <primitive object={clonedScene} scale={0.006} />
+      <pointLight position={[0, 0.03, 0]} color="#ffffff" intensity={0.3} distance={2} />
+    </group>
+  )
+}
+
+const ApolloSoyuz = ({ onObjectClick }) => {
+  const spacecraftRef = useRef()
+  const flamesRef = useRef()
+  const { scene } = useGLTF('/apollo-soyuz.glb')
+  const isDragging = useRef(false)
+  const dragStart = useRef({ x: 0, y: 0 })
+  const savedPosition = useRef(null)
+  const orbitTime = useRef(0)
+  
+  const clonedScene = useMemo(() => scene.clone(), [scene])
+  
+  // Flame particles for engine
+  const flameCount = 40
+  const flames = useMemo(() => {
+    const positions = new Float32Array(flameCount * 3)
+    const velocities = []
+    const lifetimes = []
+    const sizes = new Float32Array(flameCount)
+    
+    for (let i = 0; i < flameCount; i++) {
+      positions[i * 3] = -0.3 - Math.random() * 0.2
+      positions[i * 3 + 1] = (Math.random() - 0.5) * 0.15
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 0.08
+      velocities.push(-1.5 - Math.random() * 1.0)
+      lifetimes.push(Math.random())
+      sizes[i] = 0.03 + Math.random() * 0.04
+    }
+    
+    return { positions, velocities, lifetimes, sizes }
+  }, [])
+  
+  const engineActive = useRef(true)
+  const engineTimer = useRef(0)
+  
+  useFrame((state, delta) => {
+    if (spacecraftRef.current && !isDragging.current) {
+      orbitTime.current += delta
+      const time = orbitTime.current
+      
+      // Move from left to right slowly
+      const speed = 0.03
+      const startX = -18
+      const endX = 18
+      const totalDistance = endX - startX
+      
+      // Calculate current position in the cycle
+      const cycleProgress = (time * speed) % 1
+      spacecraftRef.current.position.x = startX + (totalDistance * cycleProgress)
+      spacecraftRef.current.position.y = Math.sin(time * 0.3) * 0.6 + 1
+      spacecraftRef.current.position.z = 2
+      
+      // Face right
+      spacecraftRef.current.rotation.y = Math.PI / 2
+      spacecraftRef.current.rotation.z = Math.sin(time * 0.2) * 0.05
+      
+      // Engine pulse effect - stronger when active
+      if (engineActive.current) {
+        spacecraftRef.current.position.x += Math.sin(time * 12) * 0.015
+      }
+    }
+    
+    // Engine pulse intervals - fire for 0.4s, pause for 0.8s
+    engineTimer.current += delta
+    if (engineActive.current && engineTimer.current > 0.4) {
+      engineActive.current = false
+      engineTimer.current = 0
+    } else if (!engineActive.current && engineTimer.current > 0.8) {
+      engineActive.current = true
+      engineTimer.current = 0
+    }
+    
+    // Animate flames only when engine active
+    if (flamesRef.current) {
+      const positions = flamesRef.current.geometry.attributes.position.array
+      const sizes = flamesRef.current.geometry.attributes.size.array
+      
+      for (let i = 0; i < flameCount; i++) {
+        if (engineActive.current) {
+          flames.lifetimes[i] -= delta * 3
+          positions[i * 3] += flames.velocities[i] * delta
+          
+          // Smooth size variation
+          sizes[i] = flames.sizes[i] * (0.7 + Math.sin(state.clock.elapsedTime * 10 + i) * 0.3)
+          
+          if (flames.lifetimes[i] <= 0 || positions[i * 3] < -1.0) {
+            positions[i * 3] = -0.3 - Math.random() * 0.1
+            positions[i * 3 + 1] = (Math.random() - 0.5) * 0.12
+            positions[i * 3 + 2] = (Math.random() - 0.5) * 0.06
+            flames.lifetimes[i] = 0.2 + Math.random() * 0.2
+          }
+        } else {
+          // Fade out flames during pause
+          flames.lifetimes[i] -= delta * 5
+          positions[i * 3] += flames.velocities[i] * delta * 0.3
+          sizes[i] *= 0.95
+          
+          if (flames.lifetimes[i] <= 0) {
+            positions[i * 3] = -10 // Hide particles
+          }
+        }
+      }
+      
+      flamesRef.current.geometry.attributes.position.needsUpdate = true
+      flamesRef.current.geometry.attributes.size.needsUpdate = true
+    }
+  })
+  
+  const handlePointerDown = (e) => {
+    e.stopPropagation()
+    if (!e.point || !spacecraftRef.current) return
+    
+    isDragging.current = true
+    dragStart.current = { x: e.point.x, y: e.point.y }
+    savedPosition.current = spacecraftRef.current.position.clone()
+    document.body.style.cursor = 'grabbing'
+  }
+  
+  const handlePointerUp = (e) => {
+    e.stopPropagation()
+    if (!e.point || !dragStart.current) {
+      isDragging.current = false
+      document.body.style.cursor = 'auto'
+      return
+    }
+    
+    const dragDistance = Math.sqrt(
+      Math.pow(e.point.x - dragStart.current.x, 2) + 
+      Math.pow(e.point.y - dragStart.current.y, 2)
+    )
+    
+    if (dragDistance < 0.5) {
+      onObjectClick('apollo-soyuz')
+    }
+    
+    isDragging.current = false
+    document.body.style.cursor = 'auto'
+  }
+  
+  const handlePointerMove = (e) => {
+    if (isDragging.current && spacecraftRef.current && savedPosition.current && e.point) {
+      e.stopPropagation()
+      const dx = e.point.x - dragStart.current.x
+      const dy = e.point.y - dragStart.current.y
+      spacecraftRef.current.position.x = savedPosition.current.x + dx
+      spacecraftRef.current.position.y = savedPosition.current.y + dy
+    }
+  }
+  
+  return (
+    <group 
+      ref={spacecraftRef}
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      onPointerMove={handlePointerMove}
+      onPointerOver={(e) => { e.stopPropagation(); document.body.style.cursor = 'grab' }}
+      onPointerOut={(e) => { e.stopPropagation(); document.body.style.cursor = 'auto' }}
+    >
+      <primitive object={clonedScene} scale={0.075} />
+      
+      {/* Engine flame particles */}
+      <points ref={flamesRef} position={[-0.35, 0, 0]}>
+        <bufferGeometry>
+          <bufferAttribute
+            attach="attributes-position"
+            count={flameCount}
+            array={flames.positions}
+            itemSize={3}
+          />
+          <bufferAttribute
+            attach="attributes-size"
+            count={flameCount}
+            array={flames.sizes}
+            itemSize={1}
+          />
+        </bufferGeometry>
+        <pointsMaterial
+          size={0.05}
+          color="#ff6600"
+          transparent
+          opacity={0.85}
+          blending={THREE.AdditiveBlending}
+          sizeAttenuation={true}
+          depthWrite={false}
+          vertexColors={false}
+        />
+      </points>
+    </group>
+  )
+}
+
+const WindowLEDLights = () => {
+  const { camera, size } = useThree()
+  const leftLightsRef = useRef()
+  const rightLightsRef = useRef()
+  const [ledsOn, setLedsOn] = useState(true)
+  
+  const toggleLeds = useCallback(() => {
+    setLedsOn(prev => !prev)
+  }, [])
+  
+  useFrame(() => {
+    if (leftLightsRef.current && rightLightsRef.current) {
+      // Position lights at screen edges, always facing camera
+      const leftPos = new THREE.Vector3(-0.95, 0, 0)
+      leftPos.unproject(camera)
+      const leftDir = leftPos.sub(camera.position).normalize()
+      leftLightsRef.current.position.copy(camera.position).add(leftDir.multiplyScalar(3))
+      
+      const rightPos = new THREE.Vector3(0.95, 0, 0)
+      rightPos.unproject(camera)
+      const rightDir = rightPos.sub(camera.position).normalize()
+      rightLightsRef.current.position.copy(camera.position).add(rightDir.multiplyScalar(3))
+    }
+  })
+  
+  // Create vertical LED strip
+  const ledCount = 12
+  const leds = useMemo(() => {
+    const positions = []
+    for (let i = 0; i < ledCount; i++) {
+      const y = (i / (ledCount - 1)) * 10 - 5 // Spread vertically
+      positions.push(y)
+    }
+    return positions
+  }, [])
+  
+  return (
+    <>
+      {/* Left edge LED strip */}
+      <group ref={leftLightsRef}>
+        {leds.map((y, i) => (
+          <group key={`left-${i}`} position={[0, y, 0]}>
+            {/* LED light */}
+            <mesh onClick={toggleLeds} onPointerOver={(e) => { e.stopPropagation(); document.body.style.cursor = 'pointer' }} onPointerOut={(e) => { e.stopPropagation(); document.body.style.cursor = 'auto' }}>
+              <cylinderGeometry args={[0.03, 0.03, 0.15, 8]} />
+              <meshStandardMaterial 
+                color={ledsOn ? "#00ddff" : "#003344"}
+                emissive={ledsOn ? "#00ffff" : "#000000"}
+                emissiveIntensity={ledsOn ? 2.5 : 0}
+                metalness={0.9}
+                roughness={0.1}
+              />
+            </mesh>
+            {ledsOn && <pointLight color="#00ddff" intensity={3.0} distance={8} decay={1.5} />}
+          </group>
+        ))}
+      </group>
+      
+      {/* Right edge LED strip */}
+      <group ref={rightLightsRef}>
+        {leds.map((y, i) => (
+          <group key={`right-${i}`} position={[0, y, 0]}>
+            {/* LED light */}
+            <mesh onClick={toggleLeds} onPointerOver={(e) => { e.stopPropagation(); document.body.style.cursor = 'pointer' }} onPointerOut={(e) => { e.stopPropagation(); document.body.style.cursor = 'auto' }}>
+              <cylinderGeometry args={[0.03, 0.03, 0.15, 8]} />
+              <meshStandardMaterial 
+                color={ledsOn ? "#00ddff" : "#003344"}
+                emissive={ledsOn ? "#00ffff" : "#000000"}
+                emissiveIntensity={ledsOn ? 2.5 : 0}
+                metalness={0.9}
+                roughness={0.1}
+              />
+            </mesh>
+            {ledsOn && <pointLight color="#00ddff" intensity={3.0} distance={8} decay={1.5} />}
+          </group>
+        ))}
+      </group>
+    </>
   )
 }
 
@@ -369,10 +806,14 @@ const OrbitingParticle = memo(({ data, index, onModalOpen, isHighlighted = false
         onPointerOut={handlePointerOut}
       >
         <boxGeometry args={[particleSize, particleSize, particleSize]} />
-        <meshBasicMaterial 
+        <meshStandardMaterial 
           color={isGlowing ? '#ffffff' : (isHighlighted ? '#ffffff' : particleColor)}
           transparent
           opacity={faceOpacity}
+          emissive={isGlowing ? '#ffffff' : (isHighlighted ? particleColor : '#000000')}
+          emissiveIntensity={isGlowing ? 0.5 : (isHighlighted ? 0.3 : 0)}
+          metalness={0.3}
+          roughness={0.7}
         />
       </mesh>
       
@@ -1688,12 +2129,18 @@ const Bullet3D = memo(({ position, id }) => {
   )
 })
 
-const HeroScene = ({ onModalOpen, highlightedIds = [], onCubePositionsUpdate, onBulletHitCube, cubesToExplode = [], bulletPositionsRef, bullets3D = [], onBulletHit, turretActive = false }) => {
+const HeroScene = ({ onModalOpen, onSpaceObjectClick, highlightedIds = [], onCubePositionsUpdate, onBulletHitCube, cubesToExplode = [], bulletPositionsRef, bullets3D = [], onBulletHit, turretActive = false }) => {
   // Track cube positions for bullet collision
   const cubePositionsRef = useRef({})
   const cubeMeshesRef = useRef({}) // Store actual mesh refs for raycasting
   const hitBulletsRef = useRef(new Set()) // Track bullets that already hit something
   const { camera, size } = useThree()
+  
+  const handleObjectClick = useCallback((objectType) => {
+    if (onSpaceObjectClick) {
+      onSpaceObjectClick(objectType)
+    }
+  }, [onSpaceObjectClick])
   
   // Real-time 3D collision detection - sphere to sphere
   useFrame(() => {
@@ -1814,6 +2261,18 @@ const HeroScene = ({ onModalOpen, highlightedIds = [], onCubePositionsUpdate, on
       
       {/* Black Hole */}
       <BlackHole />
+      
+      {/* Satellite orbiting behind black hole */}
+      <Satellite onObjectClick={handleObjectClick} />
+      
+      {/* Astronaut touring around black hole */}
+      <Astronaut orbitRadius={4} orbitSpeed={0.18} orbitOffset={0} yOffset={0.5} onObjectClick={handleObjectClick} />
+      
+      {/* Apollo Soyuz passing by */}
+      <ApolloSoyuz onObjectClick={handleObjectClick} />
+      
+      {/* Window LED lights on screen edges */}
+      <WindowLEDLights />
       
       {/* Particles from JSON */}
       <ParticleSystem 

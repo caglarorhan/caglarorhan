@@ -30,11 +30,24 @@ const PARTICLES_CONFIG = {
   debug: true,
 }
 
+// Cache for particles data
+let cachedData = null
+let cacheTimestamp = null
+
 // Fetch particles data based on configuration
 export async function fetchParticles() {
   const { source, localPath, remoteUrl, remoteOptions, fallbackToLocal, debug } = PARTICLES_CONFIG
   
   const log = debug ? console.log : () => {}
+  
+  // Return cached data if available and fresh
+  if (cachedData && cacheTimestamp) {
+    const cacheAge = Date.now() - cacheTimestamp
+    if (cacheAge < remoteOptions.cacheDuration) {
+      log('[Particles] Using cached data')
+      return cachedData
+    }
+  }
   
   try {
     if (source === 'remote') {
@@ -51,6 +64,8 @@ export async function fetchParticles() {
       
       const data = await response.json()
       log('[Particles] Remote data loaded:', data.length, 'particles')
+      cachedData = data
+      cacheTimestamp = Date.now()
       return data
       
     } else {
@@ -64,6 +79,8 @@ export async function fetchParticles() {
       
       const data = await response.json()
       log('[Particles] Local data loaded:', data.length, 'particles')
+      cachedData = data
+      cacheTimestamp = Date.now()
       return data
     }
     
@@ -77,6 +94,8 @@ export async function fetchParticles() {
         const response = await fetch(localPath)
         const data = await response.json()
         log('[Particles] Fallback data loaded:', data.length, 'particles')
+        cachedData = data
+        cacheTimestamp = Date.now()
         return data
       } catch (fallbackError) {
         console.error('[Particles] Fallback also failed:', fallbackError.message)

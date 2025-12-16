@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { Canvas } from '@react-three/fiber'
 import HeroScene from '../../scenes/HeroScene'
 import VoiceAssistant from '../VoiceAssistant'
+import FuturisticModal from '../FuturisticModal'
 import './HeroSection.css'
 
 // Safe HTML parser - converts trusted HTML string to React elements
@@ -63,6 +64,9 @@ const HeroSection = () => {
   const [particles, setParticles] = useState([])
   const [searchQuery, setSearchQuery] = useState('')
   
+  // Space object modal state
+  const [spaceObjectModal, setSpaceObjectModal] = useState({ isOpen: false, type: '', title: '', content: '' })
+  
   // Turret state
   const [turretHovered, setTurretHovered] = useState(false)
   const [turretLocked, setTurretLocked] = useState(false) // Locked in active state via double-click
@@ -97,6 +101,35 @@ const HeroSection = () => {
     requestAnimationFrame(() => {
       setModalData(null)
     })
+  }, [])
+  
+  // Space object modal handlers
+  const handleSpaceObjectClick = useCallback((objectType) => {
+    let title = ''
+    let content = ''
+    
+    switch(objectType) {
+      case 'satellite':
+        title = 'Deep Space 1'
+        content = 'NASA\'s Deep Space 1 probe was launched in 1998 as part of the New Millennium Program. It was the first spacecraft to use ion propulsion as its primary means of propulsion. [Add your custom text here]'
+        break
+      case 'astronaut':
+        title = 'EVA Astronaut'
+        content = 'Extravehicular Activity (EVA) astronauts perform spacewalks for spacecraft maintenance, repairs, and scientific experiments in microgravity. [Add your custom text here]'
+        break
+      case 'apollo-soyuz':
+        title = 'Apollo-Soyuz Test Project'
+        content = 'The Apollo-Soyuz Test Project (1975) was the first joint U.S.-Soviet space flight, marking an important symbol of détente during the Cold War. The mission tested compatible rendezvous and docking systems. [Add your custom text here]'
+        break
+      default:
+        return
+    }
+    
+    setSpaceObjectModal({ isOpen: true, type: objectType, title, content })
+  }, [])
+  
+  const handleSpaceObjectModalClose = useCallback(() => {
+    setSpaceObjectModal({ isOpen: false, type: '', title: '', content: '' })
   }, [])
   
   // Update angle ref when state changes
@@ -494,6 +527,7 @@ const HeroSection = () => {
         >
           <HeroScene 
             onModalOpen={handleModalOpen}
+            onSpaceObjectClick={handleSpaceObjectClick}
             highlightedIds={highlightedIds}
             onCubePositionsUpdate={handleCubePositionsUpdate}
             onBulletHitCube={handleBulletHitCube}
@@ -622,6 +656,18 @@ const HeroSection = () => {
 
       {/* Voice Assistant */}
       <VoiceAssistant />
+      
+      {/* Space Object Modal - imported at top */}
+      {spaceObjectModal.isOpen && createPortal(
+        <FuturisticModal
+          isOpen={spaceObjectModal.isOpen}
+          onClose={handleSpaceObjectModalClose}
+          title={spaceObjectModal.title}
+          content={spaceObjectModal.content}
+          color="#00f5ff"
+        />,
+        document.body
+      )}
     </section>
   )
 }
